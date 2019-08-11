@@ -11,8 +11,6 @@ This chapter gives the overview of how the computer system are laid out and how 
 
 ## 1.2 The procedure of a C source file to object file
 
-![compilation](C:\Users\jiewan01\OneDrive - ARM\Desktop\日常积累\cmu_15213\compilation.PNG)
-
 **Key Points:**
 
 * The procedure of compiling a C source file into object file is depicted in the above picture. It contains four phases:
@@ -54,9 +52,7 @@ There are some important reasons why programmers need to understand how compilat
 
 ## 1.6 Memory hierarchy
 
-The memory hierarchy for a typical computer system is depicted in the following pictures.
-
-![memory](C:\Users\jiewan01\OneDrive - ARM\Desktop\日常积累\cmu_15213\memory.PNG)
+The memory hierarchy for a typical computer system is depicted in the picture 1.9.
 
 ## 1.7 Basic concepts in operating system
 
