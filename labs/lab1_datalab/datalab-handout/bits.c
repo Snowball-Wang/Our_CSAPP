@@ -143,7 +143,9 @@ NOTES:
  *   Rating: 1
  */
 int bitXor(int x, int y) {
-  return 2;
+  /* return the result of x^y */
+  int result = ~(~(x & ~y) & (~(~x & y)));
+  return result;
 }
 /* 
  * tmin - return minimum two's complement integer 
@@ -152,8 +154,9 @@ int bitXor(int x, int y) {
  *   Rating: 1
  */
 int tmin(void) {
-
-  return 2;
+  /* return minimum two's complement integer */
+  int result = 0x01 << 31;
+  return result;
 
 }
 //2
@@ -165,7 +168,11 @@ int tmin(void) {
  *   Rating: 1
  */
 int isTmax(int x) {
-  return 2;
+  /* first check whethen ~(x + 1) equals to x, then exclude 0xffffffff by tmp2 */
+  int tmp0 = x + 1;
+  int tmp1 = ~(tmp0) ^ x;
+  int tmp2 = !(tmp0);
+  return !tmp1 & !tmp2;
 }
 /* 
  * allOddBits - return 1 if all odd-numbered bits in word set to 1
@@ -176,7 +183,9 @@ int isTmax(int x) {
  *   Rating: 2
  */
 int allOddBits(int x) {
-  return 2;
+  /* construct the check number 0xAAAAAAAA */
+  int checkNumber = 0xAA | 0xAA << 8 | 0xAA << 16 | 0xAA << 24;
+  return !((x & checkNumber) ^ checkNumber);
 }
 /* 
  * negate - return -x 
@@ -186,7 +195,9 @@ int allOddBits(int x) {
  *   Rating: 2
  */
 int negate(int x) {
-  return 2;
+  /* the formula for negating a signed number x ==> ~x + 1 */
+  int result = ~x + 1;  
+  return result;
 }
 //3
 /* 
@@ -199,7 +210,15 @@ int negate(int x) {
  *   Rating: 3
  */
 int isAsciiDigit(int x) {
-  return 2;
+  /* 1. check if x >= 0xFF
+     2. check if the last 4 bits in x is 0~9
+     3. check if x is between 0x30 ~ 0x39
+     Maybe a better solution than mine.
+   */
+  int tmp0 = x >> 8;
+  int tmp1 = !((x & 0xA) ^ 0xA) | !((x & 0xC) ^ 0xC);
+  int tmp2 = x >> 4 ^ 0x3;
+  return !tmp0 & !tmp1 & !tmp2;
 }
 /* 
  * conditional - same as x ? y : z 
@@ -209,7 +228,13 @@ int isAsciiDigit(int x) {
  *   Rating: 3
  */
 int conditional(int x, int y, int z) {
-  return 2;
+  /* get some hints from the internet
+     the key point is to construct flag_x = 0xFFFFFFFF when x != 0
+     using arithmetic right shift.
+   */
+  int flag_x = (x | (~x + 1)) >> 31;
+  int result = (y & flag_x) | (z & ~flag_x); 
+  return result;
 }
 /* 
  * isLessOrEqual - if x <= y  then return 1, else return 0 
@@ -219,7 +244,20 @@ int conditional(int x, int y, int z) {
  *   Rating: 3
  */
 int isLessOrEqual(int x, int y) {
-  return 2;
+  /* the situation for x <= y is divided into 3 cases:
+     1. x = y, use x ^ y to judge.
+     2. x < 0, y >= 0, see the second part of result statement.
+     3. x and y have the same sign bit, use negate(x) + y to judge. 
+   */
+  int equal = !(x ^ y);
+  int x_sign_bit = x >> 31 & 0x1;
+  int y_sign_bit = y >> 31 & 0x1;
+  int x_y_sign_bit = x_sign_bit ^ y_sign_bit;
+  int negate_x = ~x + 1;
+  int sum = negate_x + y;
+  int sum_sign_bit = sum >> 31 & 0x1;
+  int result = equal | (x_sign_bit & !y_sign_bit) | (!x_y_sign_bit & !sum_sign_bit);
+  return result;
 }
 //4
 /* 
@@ -230,8 +268,11 @@ int isLessOrEqual(int x, int y) {
  *   Max ops: 12
  *   Rating: 4 
  */
-int logicalNeg(int x) {
-  return 2;
+int logicalNeg(int x) { 
+  /* get the inspiration from function conditional() */
+  int flag_x = (x | (~x + 1)) >> 31;
+  int result = (0x0 & flag_x) | (0x1 & ~flag_x);
+  return result;
 }
 /* howManyBits - return the minimum number of bits required to represent x in
  *             two's complement
@@ -246,7 +287,28 @@ int logicalNeg(int x) {
  *  Rating: 4
  */
 int howManyBits(int x) {
-  return 0;
+  /* I had to admit that I searched for answers on the internet.
+     referenced link: https://www.github.com/jerrylzy/CS33/blob/master/Lab/datalab/bits.c
+   */ 
+  int bit16, bit8, bit4, bit2, bit1, bit0, sum;
+  /* bit invert x */
+  int x_sign_bit = x >> 31;
+  x = (x_sign_bit & ~x) | (~x_sign_bit & x);
+  
+  /* binary search on bit level */
+  bit16 = !!(x >> 16) << 4;
+  x = x >> bit16;
+  bit8 = !!(x >> 8) << 3;
+  x = x >> bit8;
+  bit4 = !!(x >> 4) << 2;
+  x = x >> bit4;
+  bit2 = !!(x >> 2) << 1;
+  x = x >> bit2;
+  bit1 = !!(x >> 1);
+  x = x >> bit1;
+  bit0 = !!x;
+  sum = bit16 + bit8 + bit4 + bit2 + bit1 + bit0 + 1;
+  return sum;
 }
 //float
 /* 
@@ -261,7 +323,31 @@ int howManyBits(int x) {
  *   Rating: 4
  */
 unsigned floatScale2(unsigned uf) {
-  return 2;
+  unsigned result;
+  unsigned sign = (uf >> 31) & 0x1;
+  unsigned mantissa = uf & 0x7FFFFF;
+  unsigned exp = (uf >> 23) & 0xFF;
+  /* 
+     if uf is a denorm, just left shift uf
+     by one bit and keep the sign bit.
+   */
+  if (exp == 0x0)
+      return (uf << 1) | (sign << 31);
+  /*
+     if uf is a INF or NaN, return uf. 
+   */
+  if (exp == 0xFF)
+      return uf;
+  exp = exp + 0x1;
+  /*
+     if exp + 1 equals 0xFF, return INF,
+     so mantissa has to be set 0x0.
+   */
+  if (exp == 0xFF)
+      return (sign << 31) | (exp << 23) | (mantissa & 0x0);
+  result = (sign << 31) | (exp << 23) | mantissa;
+  return result;
+
 }
 /* 
  * floatFloat2Int - Return bit-level equivalent of expression (int) f
@@ -276,7 +362,32 @@ unsigned floatScale2(unsigned uf) {
  *   Rating: 4
  */
 int floatFloat2Int(unsigned uf) {
-  return 2;
+  int sign = (uf >> 31) & 0x1;
+  int mantissa = (uf & 0x7FFFFF) | 0x800000;
+  int exp = ((uf >> 23) & 0xFF) - 0x7F;
+
+  /* if exp > 31, overflow. */
+  if (exp > 31)
+      return 0x80000000u;
+  /* if exp < 0, the absolute value won't be greater than 0. */
+  if (exp < 0)
+      return 0u;
+  /* if exp < 23, mantissa shift left by (exp - 23) bits.
+     else, mantissa shift right by (23 - exp) bits.
+   */
+  if (exp > 23)
+      mantissa = mantissa << (exp - 23);
+  else
+      mantissa = mantissa >> (23 - exp);
+
+  /* if the sign bit of mantissa is the same as the original, return mantissa.
+     if not, return the negative value of mantissa.
+   */
+  if (!((mantissa >> 31) ^ sign))
+      return mantissa;
+  else
+      return ~mantissa + 1;
+
 }
 /* 
  * floatPower2 - Return bit-level equivalent of the expression 2.0^x
@@ -292,5 +403,19 @@ int floatFloat2Int(unsigned uf) {
  *   Rating: 4
  */
 unsigned floatPower2(int x) {
-    return 2;
+  /* first construt the bitwise representation for 2.0 and exponent part for 0.5 */
+  int float_2 = 0x40000000;
+  int exp_half = 0x40000;
+  /* if x < -23, the result is too small, so return 0 */
+  if (x < - 23)
+      return 0;
+  /* if -23 < x < 0, shift right the exponent part for 0.5 by (~x + 1) bits */
+  else if (x < 0)
+      return float_2 | (exp_half >> (~x + 1));
+  /* if 0 <= x <= 127, add the x-1 to the exponent part for 2.0 and do the left shifting */
+  else if (x <= 127)
+      return ((float_2 >> 23) + x - 1) << 23;
+  /* if x > 127, the result is too big, so return +INF */
+  else
+      return 0x7F800000;
 }
