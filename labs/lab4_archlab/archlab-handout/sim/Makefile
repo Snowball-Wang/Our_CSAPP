@@ -7,13 +7,15 @@
 # to tell gcc which directory to look in. Comment this out if you
 # don't have Tcl/Tk.
 
-TKLIBS=-L/usr/lib -ltk -ltcl
+#TKLIBS=-L/usr/lib -ltk -ltcl
+TKLIBS=-L/usr/lib/x86_64-linux-gnu -ltk8.6 -ltcl8.6
 
 # Modify the following line so that gcc can find the tcl.h and tk.h
 # header files on your system. Comment this out if you don't have
 # Tcl/Tk.
 
-TKINC=-isystem /usr/include/tcl8.5
+#TKINC=-isystem /usr/include/tcl8.5
+TKINC=-isystem /usr/include/tcl8.6
 
 ##################################################
 # You shouldn't need to modify anything below here
