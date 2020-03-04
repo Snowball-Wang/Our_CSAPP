@@ -1,0 +1,41 @@
+# sum_list - Sum the elements of a linked list
+# Execution begins at address 0
+	.pos 0 
+	irmovq stack, %rsp    # Set up stack pointer
+	irmovq ele1, %rdi     # sum_list(linkedlist)
+	call sum_list         # Execute sum_list program
+	halt
+
+# Sample linked list
+	.align 8
+ele1:
+	.quad 0x00a
+	.quad ele2
+ele2:
+	.quad 0x0b0
+	.quad ele3
+ele3:
+	.quad 0xc00
+	.quad 0
+
+# long sum_list(list_ptr ls)
+# ls in %rdi
+sum_list:
+	irmovq $16, %r8       # Set the constant 16
+	xorq %rax, %rax       # Set $rax to 0
+
+loop:
+	mrmovq (%rdi), %r9    # Read the value in the node
+	addq %r9, %rax        # Add the value in the node
+	mrmovq 8(%rdi), %rdx  # Read the next pointer
+	andq %rdx, %rdx       # Set CC
+	jne test              # Go to test
+	ret                   # Return
+
+test:
+	addq %r8, %rdi        # Move $rdi to the next node
+	jmp loop              # Go to loop
+
+# Stack starts here and grows to lower addresses
+	.pos 0x2000
+stack:
