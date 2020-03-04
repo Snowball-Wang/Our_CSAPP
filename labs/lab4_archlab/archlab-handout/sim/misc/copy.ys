@@ -2,10 +2,7 @@
 # Execution begins at address 0
 	.pos 0 
 	irmovq stack, %rsp    # Set up stack pointer
-	irmovq src, %rdi      
-	irmovq dest, %rsi
-	irmovq $3, %rdx       # copy_block(src, dest, len)
-	call copy_block       # Execute copy_block program
+	call main             # Call main
 	halt
 
 # Source block
@@ -21,6 +18,12 @@ dest:
 	.quad 0x222
 	.quad 0x333
 
+main:
+	irmovq src, %rdi
+	irmovq dest, %rsi
+	irmovq $3, %rdx       # copy_block(src, dest, len)
+	call copy_block       # Execute copy_block program
+	ret
 
 # long copy_block(long *src, long *dest, long len)
 # src in %rdi, dest in %rsi, len in %rdx

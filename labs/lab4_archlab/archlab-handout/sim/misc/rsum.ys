@@ -2,8 +2,7 @@
 # Execution begins at address 0
 	.pos 0 
 	irmovq stack, %rsp     # Set up stack pointer
-	irmovq ele1, %rdi      # rsum_list(linkedlist)
-	call rsum_list         # Execute rsum_list program
+	call main              # Call main
 	halt
 
 # Sample linked list
@@ -18,6 +17,10 @@ ele3:
 	.quad 0xc00
 	.quad 0
 
+main:
+	irmovq ele1, %rdi      # rsum_list(linkedlist)
+	call rsum_list         # Execute rsum_list program
+	ret
 # long rsum_list(list_ptr ls)
 # ls in %rdi
 rsum_list:
