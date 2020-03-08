@@ -24,18 +24,18 @@
                             | # long rsum_list(list_ptr ls)
                             | # ls in %rdi
 0x05c:                      | rsum_list:
-0x05c: a03f                 | 	pushq %rbx             # Save $rbx
-0x05e: 6300                 | 	xorq %rax, %rax        # Set $rax to zero
-0x060: 6277                 | 	andq %rdi, %rdi        # Set CC
-0x062: 738c00000000000000   | 	je test                # Go to test
+0x05c: 6300                 | 	xorq %rax, %rax        # Set $rax to zero
+0x05e: 6277                 | 	andq %rdi, %rdi        # Set CC
+0x060: 738e00000000000000   | 	je test                # Go to test
+0x069: a03f                 | 	pushq %rbx             # Save $rbx
 0x06b: 50370000000000000000 | 	mrmovq (%rdi), %rbx    # Store the value of the node in $rbx
 0x075: 50870800000000000000 | 	mrmovq 8(%rdi), %r8    # The address of next node
 0x07f: 2087                 | 	rrmovq %r8, %rdi       # Pass the argument for rsum_list
 0x081: 805c00000000000000   | 	call rsum_list         # Call rsum_list
 0x08a: 6030                 | 	addq %rbx, %rax        # Add the value
-                            | 
-0x08c:                      | test:
 0x08c: b03f                 | 	popq %rbx              # Restore $rbx
+                            | 
+0x08e:                      | test:
 0x08e: 90                   | 	ret                    # Return
                             | 
                             | # Stack starts here and grows to lower addresses

@@ -24,18 +24,18 @@ main:
 # long rsum_list(list_ptr ls)
 # ls in %rdi
 rsum_list:
-	pushq %rbx             # Save $rbx
 	xorq %rax, %rax        # Set $rax to zero
 	andq %rdi, %rdi        # Set CC
 	je test                # Go to test
+	pushq %rbx             # Save $rbx
 	mrmovq (%rdi), %rbx    # Store the value of the node in $rbx
 	mrmovq 8(%rdi), %r8    # The address of next node
 	rrmovq %r8, %rdi       # Pass the argument for rsum_list
 	call rsum_list         # Call rsum_list
 	addq %rbx, %rax        # Add the value
+	popq %rbx              # Restore $rbx
 
 test:
-	popq %rbx              # Restore $rbx
 	ret                    # Return
 
 # Stack starts here and grows to lower addresses
