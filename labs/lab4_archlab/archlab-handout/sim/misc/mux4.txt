@@ -1,0 +1,9 @@
+Command to change mux4.hcl to mux4.c
+./hcl2c -n mux4.hcl < mux4.hcl > mux4.c
+
+Command to compile mux4.c
+gcc -Wall -O2 mux4.c -o mux4
+
+Command to verify the 4-way multiplexor
+./mux4 0 1 2 3 4  ==> Output 1
+./mux4 2 1 2 3 4  ==> Output 3
