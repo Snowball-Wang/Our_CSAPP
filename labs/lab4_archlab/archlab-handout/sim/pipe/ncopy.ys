@@ -20,19 +20,80 @@ ncopy:
 	andq %rdx,%rdx		# len <= 0?
 	jle Done		# if so, goto Done:
 
-Loop:	mrmovq (%rdi), %r10	# read val from src...
+Loop:
+	iaddq $-4, %rdx
+	jge L1
+	jmp rest
+
+L1:
+	mrmovq (%rdi), %r10	# read val from src...
 	rmmovq %r10, (%rsi)	# ...and store it to dst
+	mrmovq 8(%rdi), %r11
 	andq %r10, %r10		# val <= 0?
-	jle Npos		# if so, goto Npos:
-	irmovq $1, %r10
-	addq %r10, %rax		# count++
-Npos:	irmovq $1, %r10
-	subq %r10, %rdx		# len--
-	irmovq $8, %r10
-	addq %r10, %rdi		# src++
-	addq %r10, %rsi		# dst++
-	andq %rdx,%rdx		# len > 0?
-	jg Loop			# if so, goto Loop:
+	jle L2				# if so, goto L2:
+	iaddq $1, %rax		# count++
+
+L2:
+	rmmovq %r11, 8(%rsi)
+	mrmovq 16(%rdi), %r10
+	andq %r11, %r11
+	jle L3
+	iaddq $1, %rax
+
+L3:
+	rmmovq %r10, 16(%rsi)
+	mrmovq 24(%rdi), %r11
+	andq %r10, %r10
+	jle L4
+	iaddq $1, %rax
+
+L4:
+	rmmovq %r11, 24(%rsi)
+	andq %r11, %r11
+	jle iter
+	iaddq $1, %rax
+
+iter:
+	iaddq $32, %rdi
+	iaddq $32, %rsi
+	jmp Loop
+
+rest:
+	iaddq $4, %rdx
+	jg rest_L1
+	jmp Done
+
+rest_L1:
+	mrmovq (%rdi), %r10
+	rmmovq %r10, (%rsi)
+	mrmovq 8(%rdi), %r11
+	andq %r10, %r10
+	jle rest_L2
+	iaddq $1, %rax
+
+rest_L2:
+	iaddq $-1, %rdx
+	jle Done
+	rmmovq %r11, 8(%rsi)
+	mrmovq 16(%rdi), %r10
+	andq %r11, %r11
+	jle rest_L3
+	iaddq $1, %rax
+
+rest_L3:
+	iaddq $-1, %rdx
+	jle Done
+	rmmovq %r10, 16(%rsi)
+	mrmovq 24(%rdi), %r11
+	andq %r10, %r10
+	jle rest_L4
+	iaddq $1, %rax
+
+rest_L4:
+	iaddq $-1, %rdx
+	je Done
+	jmp Done
+
 ##################################################################
 # Do not modify the following section of code
 # Function epilogue.
