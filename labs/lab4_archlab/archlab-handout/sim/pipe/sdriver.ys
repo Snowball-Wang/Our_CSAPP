@@ -29,22 +29,21 @@ ncopy:
 ##################################################################
 # You can modify this portion
 	# Loop header
-	xorq %rax,%rax		# count = 0;
 	andq %rdx,%rdx		# len <= 0?
-	jle Done		# if so, goto Done:
+	jg Loop      		# if so, goto Loop:
+	jmp Done
 
 Loop:
-	iaddq $-4, %rdx
-	jge L1
-	jmp rest
+	iaddq $-8, %rdx
+	jl rest
 
 L1:
-	mrmovq (%rdi), %r10	# read val from src...
-	rmmovq %r10, (%rsi)	# ...and store it to dst
-	mrmovq 8(%rdi), %r11
-	andq %r10, %r10		# val <= 0?
-	jle L2				# if so, goto L2:
-	iaddq $1, %rax		# count++
+	mrmovq (%rdi), %r10	 # read val1 from src
+	mrmovq 8(%rdi), %r11 # read val2 from src+8
+	rmmovq %r10, (%rsi)	 # store val1 to dst
+	andq %r10, %r10		 # val1 <= 0?
+	jle L2				 # if so, goto L2:
+	iaddq $1, %rax		 # count++
 
 L2:
 	rmmovq %r11, 8(%rsi)
@@ -62,24 +61,52 @@ L3:
 
 L4:
 	rmmovq %r11, 24(%rsi)
+	mrmovq 32(%rdi), %r10
+	andq %r11, %r11
+	jle L5
+	iaddq $1, %rax
+
+L5:
+    rmmovq %r10, 32(%rsi)
+	mrmovq 40(%rdi), %r11
+	andq %r10, %r10
+	jle L6
+	iaddq $1, %rax
+
+L6:
+    rmmovq %r11, 40(%rsi)
+	mrmovq 48(%rdi), %r10
+	andq %r11, %r11
+	jle L7
+	iaddq $1, %rax
+
+L7:
+    rmmovq %r10, 48(%rsi)
+	mrmovq 56(%rdi), %r11
+	andq %r10, %r10
+	jle L8
+	iaddq $1, %rax
+
+L8:
+    rmmovq %r11, 56(%rsi)
 	andq %r11, %r11
 	jle iter
 	iaddq $1, %rax
 
 iter:
-	iaddq $32, %rdi
-	iaddq $32, %rsi
+	iaddq $64, %rdi
+	iaddq $64, %rsi
 	jmp Loop
 
 rest:
-	iaddq $4, %rdx
+	iaddq $8, %rdx
 	jg rest_L1
 	jmp Done
 
 rest_L1:
 	mrmovq (%rdi), %r10
-	rmmovq %r10, (%rsi)
 	mrmovq 8(%rdi), %r11
+	rmmovq %r10, (%rsi)
 	andq %r10, %r10
 	jle rest_L2
 	iaddq $1, %rax
@@ -103,9 +130,49 @@ rest_L3:
 	iaddq $1, %rax
 
 rest_L4:
+    iaddq $-1, %rdx
+	jle Done
+	rmmovq %r11, 24(%rsi)
+	mrmovq 32(%rdi), %r10
+	andq %r11, %r11
+	jle rest_L5
+	iaddq $1, %rax
+
+rest_L5:
+    iaddq $-1, %rdx
+	jle Done
+	rmmovq %r10, 32(%rsi)
+	mrmovq 40(%rdi), %r11
+	andq %r10, %r10
+	jle rest_L6
+	iaddq $1, %rax
+
+rest_L6:
 	iaddq $-1, %rdx
-	je Done
-	jmp Done
+	jle Done
+	rmmovq %r11, 40(%rsi)
+	mrmovq 48(%rdi), %r10
+	andq %r11, %r11
+	jle rest_L7
+	iaddq $1, %rax
+
+rest_L7:
+    iaddq $-1, %rdx
+	jle Done
+	rmmovq %r10, 48(%rsi)
+	mrmovq 56(%rdi), %r11
+	andq %r10, %r10
+	jle rest_L8
+	iaddq $1, %rax
+
+rest_L8:
+    iaddq $-1, %rdx
+	jle Done
+	rmmovq %r11, 56(%rsi)
+	andq %r11, %r11
+	jle Done
+	iaddq $1, %rax
+	
 
 ##################################################################
 # Do not modify the following section of code
@@ -124,9 +191,9 @@ EndFun:
 	.align 8
 src:
 	.quad 1
-	.quad 2
+	.quad -2
 	.quad -3
-	.quad -4
+	.quad 4
 	.quad 0xbcdefa # This shouldn't get moved
 
 	.align 16
