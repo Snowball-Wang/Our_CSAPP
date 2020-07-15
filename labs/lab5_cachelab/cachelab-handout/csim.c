@@ -243,6 +243,6 @@ int main(int argc, char **argv)
 	cacheline_t **cache = initCache(total_set, cache_param.E);
 	replayTrace(trace_file, cache, cache_param, &hit, &miss, &eviction);
 	freeCache(cache, total_set);
-    printSummary(hit, miss, eviction);
-    return 0;
+	printSummary(hit, miss, eviction);
+	return 0;
 }
