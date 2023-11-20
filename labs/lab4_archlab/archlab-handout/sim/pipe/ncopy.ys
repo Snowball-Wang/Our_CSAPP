@@ -16,21 +16,37 @@ ncopy:
 ##################################################################
 # You can modify this portion
 	# Loop header
-	xorq %rax,%rax		# count = 0;
-	andq %rdx,%rdx		# len <= 0?
-	jle Done		# if so, goto Done:
+Start:
+	iaddq $-2, %rdx		# len >= 2?
+	jge Loop1		# if len >= 2, goto Loop1
+	jmp Tail		# if so, goto Tail
 
-Loop:	mrmovq (%rdi), %r10	# read val from src...
-	iaddq $8, %rdi		# src++
-	rmmovq %r10, (%rsi)	# ...and store it to dst
-	andq %r10, %r10		# val <= 0?
-	jle Npos		# if so, goto Npos:
+Loop1:	
+	mrmovq (%rdi), %r10	# read val1 from src[0]
+	mrmovq 8(%rdi), %r11	# read val2 from src[1]
+	rmmovq %r10, (%rsi)	# store val1 to dst[0]
+	andq %r10, %r10		# val1 <= 0?
+	jle Loop2		# if so, goto Loop2
 	iaddq $1, %rax		# count++
-Npos:
-	iaddq $-1, %rdx		# len--
+Loop2:
+	rmmovq %r11, 8(%rsi)	# store val2 to dst[1]
+	andq %r11, %r11		# val2 <= 0?
+	jle Loop		# if so, goto Loop
+	iaddq $1, %rax		# count++
+Loop:
+	iaddq $16, %rdi		# src+2
+	iaddq $16, %rsi		# dst+2
+	jmp  Start
+Tail:
+	iaddq $1, %rdx		# len == 1?
+	jl Done			# len < 1, goto Done
+	mrmovq (%rdi), %r10	# read val from src[0]
+	iaddq $8, %rdi		# src++
+	rmmovq %r10, (%rsi)	# store val to dst[0]
 	iaddq $8, %rsi		# dst++
-	andq %rdx,%rdx		# len > 0?
-	jg Loop			# if so, goto Loop:
+	andq %r10, %r10		# val <=0 ?
+	jle Done
+	iaddq $1, %rax		# count++
 ##################################################################
 # Do not modify the following section of code
 # Function epilogue.
