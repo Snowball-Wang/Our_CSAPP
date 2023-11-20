@@ -17,8 +17,8 @@ ncopy:
 # You can modify this portion
 	# Loop header
 Start:
-	iaddq $-4, %rdx		# len >= 4?
-	jge Loop1		# if len >= 4, goto Loop1
+	iaddq $-8, %rdx		# len >= 8?
+	jge Loop1		# if len >= 8, goto Loop1
 	jmp Tail		# if so, goto Tail
 
 Loop1:	
@@ -41,16 +41,40 @@ Loop3:
 	jle Loop4		# if so, goto Loop4
 	iaddq $1, %rax		# count++
 Loop4:
+	mrmovq 32(%rdi), %r10	# read val5 from src[4]
 	rmmovq %r11, 24(%rsi)	# store val4 to dst[3]
 	andq %r11, %r11		# val4 <= 0?
+	jle Loop5		# if so, goto Loop5
+	iaddq $1, %rax		# count++
+Loop5:
+	mrmovq 40(%rdi), %r11	# read val6 from src[5]
+	rmmovq %r10, 32(%rsi)	# store val5 to dst[4]
+	andq %r10, %r10		# val5 <= 0?
+	jle Loop6		# if so, goto Loop6
+	iaddq $1, %rax		# count++
+Loop6:
+	mrmovq 48(%rdi), %r10	# read val7 from src[6]
+	rmmovq %r11, 40(%rsi)	# store val6 to dst[5]
+	andq %r11, %r11		# val6 <= 0?
+	jle Loop7		# if so, goto Loop7
+	iaddq $1, %rax		# count++
+Loop7:
+	mrmovq 56(%rdi), %r11	# read val8 from src[7]
+	rmmovq %r10, 48(%rsi)	# store val7 to dst[6]
+	andq %r10, %r10		# val7 <= 0?
+	jle Loop8		# if so, goto Loop8
+	iaddq $1, %rax		# count++
+Loop8:
+	rmmovq %r11, 56(%rsi)	# store val8 to dst[7]
+	andq %r11, %r11		# val8 <= 0?
 	jle Loop		# if so, goto Loop
 	iaddq $1, %rax		# count++
 Loop:
-	iaddq $32, %rdi		# src+4
-	iaddq $32, %rsi		# dst+4
+	iaddq $64, %rdi		# src+8
+	iaddq $64, %rsi		# dst+8
 	jmp  Start
 Tail:
-	iaddq $4, %rdx		# restore %rdx
+	iaddq $8, %rdx		# restore %rdx
 	jg Tail1		# if len > 0, goto Tail1
 	jmp Done		# if len == 0, goto Done
 Tail1:
@@ -72,7 +96,39 @@ Tail3:
 	iaddq $-1, %rdx		# len--
 	jle Done		# if left len is 2, goto Done
 	rmmovq %r10, 16(%rsi)	# store val3 to dst[2]
+	mrmovq 24(%rdi), %r11	# read val4 from src[3] -- potential overread
 	andq %r10, %r10		# val3 <= 0?
+	jle Tail4		# if so, goto Tail4
+	iaddq $1, %rax		# count++
+Tail4:
+	iaddq $-1, %rdx		# len--
+	jle Done		# if left len is 3, goto Done
+	rmmovq %r11, 24(%rsi)	# store val4 to dst[3]
+	mrmovq 32(%rdi), %r10	# read val5 from src[4] -- potential overread
+	andq %r11, %r11		# val4 <= 0?
+	jle Tail5		# if so, goto Tail5
+	iaddq $1, %rax		# count++
+Tail5:
+	iaddq $-1, %rdx		# len--
+	jle Done		# if left len is 4, goto Done
+	rmmovq %r10, 32(%rsi)	# store val5 to dst[4]
+	mrmovq 40(%rdi), %r11	# read val6 from src[5] -- potential overread
+	andq %r10, %r10		# val5 <= 0?
+	jle Tail6		# if so, goto Tail6
+	iaddq $1, %rax		# count++
+Tail6:
+	iaddq $-1, %rdx		# len--
+	jle Done		# if left len is 5, goto Done
+	rmmovq %r11, 40(%rsi)	# store val6 to dst[5]
+	mrmovq 48(%rdi), %r10	# read val7 from src[6] -- potential overread
+	andq %r11, %r11		# val6 <= 0?
+	jle Tail7		# if so, goto Tail7
+	iaddq $1, %rax		# count++
+Tail7:
+	iaddq $-1, %rdx		# len--
+	jle Done		# if left len is 6, goto Done
+	rmmovq %r10, 48(%rsi)	# store val7 to dst[6]
+	andq %r10, %r10		# val7 <= 0?
 	jle Done		# if so, goto Done
 	iaddq $1, %rax		# count++
 ##################################################################
