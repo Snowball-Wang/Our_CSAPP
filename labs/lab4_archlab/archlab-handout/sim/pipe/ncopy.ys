@@ -17,8 +17,8 @@ ncopy:
 # You can modify this portion
 	# Loop header
 Start:
-	iaddq $-2, %rdx		# len >= 2?
-	jge Loop1		# if len >= 2, goto Loop1
+	iaddq $-4, %rdx		# len >= 4?
+	jge Loop1		# if len >= 4, goto Loop1
 	jmp Tail		# if so, goto Tail
 
 Loop1:	
@@ -29,23 +29,51 @@ Loop1:
 	jle Loop2		# if so, goto Loop2
 	iaddq $1, %rax		# count++
 Loop2:
+	mrmovq 16(%rdi), %r10	# read val3 from src[2]
 	rmmovq %r11, 8(%rsi)	# store val2 to dst[1]
 	andq %r11, %r11		# val2 <= 0?
+	jle Loop3		# if so, goto Loop3
+	iaddq $1, %rax		# count++
+Loop3:
+	mrmovq 24(%rdi), %r11	# read val4 from src[3]
+	rmmovq %r10, 16(%rsi)	# store val3 to dst[2]
+	andq %r10, %r10		# val3 <= 0?
+	jle Loop4		# if so, goto Loop4
+	iaddq $1, %rax		# count++
+Loop4:
+	rmmovq %r11, 24(%rsi)	# store val4 to dst[3]
+	andq %r11, %r11		# val4 <= 0?
 	jle Loop		# if so, goto Loop
 	iaddq $1, %rax		# count++
 Loop:
-	iaddq $16, %rdi		# src+2
-	iaddq $16, %rsi		# dst+2
+	iaddq $32, %rdi		# src+4
+	iaddq $32, %rsi		# dst+4
 	jmp  Start
 Tail:
-	iaddq $1, %rdx		# len == 1?
-	jl Done			# len < 1, goto Done
-	mrmovq (%rdi), %r10	# read val from src[0]
-	iaddq $8, %rdi		# src++
-	rmmovq %r10, (%rsi)	# store val to dst[0]
-	iaddq $8, %rsi		# dst++
-	andq %r10, %r10		# val <=0 ?
-	jle Done
+	iaddq $4, %rdx		# restore %rdx
+	jg Tail1		# if len > 0, goto Tail1
+	jmp Done		# if len == 0, goto Done
+Tail1:
+	mrmovq (%rdi), %r10	# read val1 from src[0]
+	mrmovq 8(%rdi), %r11	# read val2 from src[1] -- potential overread
+	rmmovq %r10, (%rsi)	# store val1 to dst[0]
+	andq %r10, %r10		# val1 <= 0?
+	jle Tail2		# if so, goto Tail2
+	iaddq $1, %rax		# count++
+Tail2:
+	iaddq $-1, %rdx		# len--
+	jle Done		# if left len is 1, goto Done
+	rmmovq %r11, 8(%rsi)	# store val2 to dst[1]
+	mrmovq 16(%rdi), %r10	# read val3 from src[2] -- potential overread
+	andq %r11, %r11		# val2 <= 0?
+	jle Tail3		# if so, goto Tail3
+	iaddq $1, %rax		# count++
+Tail3:
+	iaddq $-1, %rdx		# len--
+	jle Done		# if left len is 2, goto Done
+	rmmovq %r10, 16(%rsi)	# store val3 to dst[2]
+	andq %r10, %r10		# val3 <= 0?
+	jle Done		# if so, goto Done
 	iaddq $1, %rax		# count++
 ##################################################################
 # Do not modify the following section of code
