@@ -16,10 +16,8 @@ ncopy:
 ##################################################################
 # You can modify this portion
 	# Loop header
-Start:
-	iaddq $-8, %rdx		# len >= 8?
-	jge Loop1		# if len >= 8, goto Loop1
-	jmp Tail		# if so, goto Tail
+	iaddq $-10, %rdx	# len >= 10?
+	jl Tail			# if so, goto Tail
 
 Loop1:	
 	mrmovq (%rdi), %r10	# read val1 from src[0]
@@ -65,35 +63,66 @@ Loop7:
 	jle Loop8		# if so, goto Loop8
 	iaddq $1, %rax		# count++
 Loop8:
+	mrmovq 64(%rdi), %r10	# read val9 from src[8]
 	rmmovq %r11, 56(%rsi)	# store val8 to dst[7]
 	andq %r11, %r11		# val8 <= 0?
+	jle Loop9		# if so, goto Loop9
+	iaddq $1, %rax		# count++
+Loop9:
+	mrmovq 72(%rdi), %r11	# read val10 from src[9]
+	rmmovq %r10, 64(%rsi)	# store val9 to dst[8]
+	andq %r10, %r10		# val9 <= 0?
+	jle Loop10		# if so, goto Loop10
+	iaddq $1, %rax		# count++
+Loop10:
+	rmmovq %r11, 72(%rsi)	# store val10 to dst[9]
+	andq %r11, %r11		# val10 <= 0?
 	jle Loop		# if so, goto Loop
 	iaddq $1, %rax		# count++
 Loop:
-	iaddq $64, %rdi		# src+8
-	iaddq $64, %rsi		# dst+8
-	jmp  Start
+	iaddq $80, %rdi		# src+10
+	iaddq $80, %rsi		# dst+10
+	iaddq $-10, %rdx	# len = len -10
+	jge Loop1		# goto Loop1
 Tail:
-	iaddq $8, %rdx		# restore %rdx
-	jg Tail_jump		# if len > 0, goto Tail_jump
-	ret
-Tail_jump:
-	iaddq $-4, %rdx
-	jl Tail_left		# len < 4
-	jg Tail_right		# len > 4		
-	jmp Tail4		# len == 4
+	iaddq $7, %rdx		# len <= 3
+	jl Tail_left
+	jg Tail_right
+	jmp Tail3		# len == 3
 Tail_left:
 	iaddq $2, %rdx
-	jl Tail1		# len == 1
-	jg Tail3		# len == 3, warning: cond codes will pass down
-	jmp Tail2		# len == 2
+	je Tail1		# len == 1
+	iaddq $-1, %rdx
+	je Tail2		# len == 2
+	ret			# len == 0
 Tail_right:
+	iaddq $-3, %rdx
+	jg Tail_right2		# len > 6
+	je Tail6		# len == 6
+	iaddq $1, %rdx		# the left tree of right tree
+	je Tail5		# len == 5
+	jmp Tail4		# len == 4
+Tail_right2:
 	iaddq $-2, %rdx
-	jl Tail5		# len == 5
-	jg Tail7		# len == 7
-	jmp Tail6		# len == 6
+	jl Tail7		# len == 7
+	je Tail8		# len == 8
+# len == 9
+Tail9:
+	mrmovq 64(%rdi), %r9	# read val9 from src[8]
+	rmmovq %r9, 64(%rsi)	# store val9 to dst[8]
+	andq %r9, %r9
+Tail8:
+	mrmovq 56(%rdi), %r9	# read val8 from src[7]
+	jle Tail8_1		# val9 <= 0?
+	iaddq $1, %rax		# count++
+Tail8_1:
+	rmmovq %r9, 56(%rsi)	# store val8 to dst[7]
+	andq %r9, %r9
 Tail7:
 	mrmovq 48(%rdi), %r9	# read val7 from src[6]
+	jle Tail7_1		# val8 <= 0?
+	iaddq $1, %rax		# count++
+Tail7_1:
 	rmmovq %r9, 48(%rsi)	# store val7 to dst[6]
 	andq %r9, %r9
 Tail6:
@@ -118,7 +147,6 @@ Tail4_1:
 	rmmovq %r9, 24(%rsi)	# store val4 to dst[3]
 	andq %r9, %r9
 Tail3:
-	andq %r9, %r9		# indispensable because cond code is set when jumping from Tail_left
 	mrmovq 16(%rdi), %r9	# read val3 from src[2]
 	jle Tail3_1		# val4 <= 0?
 	iaddq $1, %rax		# count++
